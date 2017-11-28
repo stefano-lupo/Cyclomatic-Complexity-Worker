@@ -1,27 +1,27 @@
 {
-  "name": "cyclomatic-complexity",
+  "name": "cyclomatic-complexity-worker",
   "version": "1.0.0",
-  "description": "Server for calculating cyclomatic complexity of a git repository",
+  "description": "Worker for calculating cyclomatic complexity of a git repository",
   "main": "server.js",
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
-    "start": "nodemon server.js --exec babel-node --presets es2015"
+    "start": "nodemon server.js --exec babel-node --presets es2015",
+    "babel": "babel-node server.js --presets es2015"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stefano-lupo/Cyclomatic-Complexity.git"
+    "url": "git+https://github.com/stefano-lupo/Cyclomatic-Complexity-Worker.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "hhttps://github.com/stefano-lupo/Cyclomatic-Complexity/issues"
+    "url": "hhttps://github.com/stefano-lupo/Cyclomatic-Complexity-Worker/issues"
   },
-  "homepage": "https://github.com/stefano-lupo/Cyclomatic-Complexity#readme",
+  "homepage": "https://github.com/stefano-lupo/Cyclomatic-Complexity-Worker#readme",
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.17.2",
     "dotenv": "^4.0.0",
-    "ejs": "^2.5.7",
     "express": "^4.15.3",
     "express-jwt": "^5.3.0",
     "jsonwebtoken": "^7.4.1",
@@ -29,7 +29,8 @@
     "mongodb": "^2.2.30",
     "mongoose": "^4.11.3",
     "morgan": "^1.9.0",
-    "node-fetch": "^1.7.1"
+    "node-fetch": "^1.7.1",
+    "nodegit": "^0.20.3"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",

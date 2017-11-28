@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import moment from 'moment';
 
 // Import Controllers
-import * as ServerController from './controllers/ServerController';
+import * as WorkerController from './controllers/WorkerController';
 
 // Create Server
 const app = express();
@@ -28,29 +28,14 @@ app.set('view engine', 'ejs');
 
 const router = express.Router();
 
-// Public pages endpoints
-app.get('/', (req, res) => {
-  // Define some variables
-  const drinks = [
-    { name: 'Bloody Mary', drunkness: 3 },
-    { name: 'Martini', drunkness: 5 },
-    { name: 'Scotch', drunkness: 10 }
-  ];
-  const tagline = "Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.";
-
-
-  // Automatically looks for views folder
-  res.render('pages/index', {drinks, tagline})
-});
-
 
 // API endpoints
-app.post('/api/complexity', ServerController.calculateComplexity);
+app.post('/job', WorkerController.createJob);
 
 
 
 
 // Initialize the Server
-app.listen(5000, () => {
-  console.log('Cyclomatic Complexity Server on port 5000');
+app.listen(5001, () => {
+  console.log('Cyclomatic Complexity Worker on port 5000');
 });
