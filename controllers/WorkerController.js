@@ -3,14 +3,18 @@ import escomplex from 'escomplex';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
-dotenv.config();
+
+dotenv.config({path: `../${__dirname}/.env`});
+console.log(process.env);
 
 const GITHUB_BASE_URL = "https://github.com";
 const MASTER = "http://localhost:5000/api";
 
 
-
-const token = process.env.GITHUB_KEY;
+/**
+ * Parameters for accessing Github API with my api key
+ */
+const token = "githubtoken";
 const cloneURL = `https://${token}:x-oauth-basic@github.com`;
 const cloneOptions = {
   fetchOpts: {
@@ -24,21 +28,29 @@ const cloneOptions = {
 };
 
 
+const repos = new Map();
+
+
 /**
  * POST /job
  * body: {repoUrl}
  * Gets the worker to clone the given repo
  */
 export const createJob = async (req, res) => {
-  const { repoUrl, repoName, repoOwner } = req.body;
+  const { repoHash, repoName, repoOwner } = req.body;
   const url = `${cloneURL}/${repoOwner}/${repoName}`;
   console.log(`Cloning ${url}...`);
-  Git.Clone(url, `downloads/${repoName}-${new Date().getTime()/1000}`, cloneOptions)
+  const repoLocation = `downloads/${repoName}-${new Date().getTime()/1000}`;
+  Git.Clone(url, repoLocation, cloneOptions)
     .then((repository) => {
-      // Work with the repository object here.
+      // Repository object here is a disaster.. so dont save it, but it is cloned..
+      repos.set(repoHash, repoLocation);
       res.send({message: `Successfully cloned repo`});
-      // return;
-      // processRepo(repository, repoUrl);
+      console.log(`Waiting 2s to request work`);
+      setTimeout(() => {
+        process();
+      }, 2000);
+      // process();
     })
     .catch(err => {
       console.error(err);
@@ -47,33 +59,42 @@ export const createJob = async (req, res) => {
   ;
 };
 
-async function processRepo(repo, repoUrl) {
-  console.log(`Processing: ${repo.path()}`);
+async function process() {
+  const { ok, status, response } = await makeRequest(`${MASTER}/work`, "get");
 
-  const { ok, status, response } = await makeRequest(`${MASTER}/work`, "post", {repoUrl});
+  const { finished, repoHash, commitSha, file, } = response;
 
-  if(response.finished) {
+  if(finished) {
+    console.log(`Finished!`);
     return;
   }
 
-  const { commitSha, file } = response;
-  console.log(`Looking for ${commitSha} - ${file}`);
+  console.log(`Looking for ${repoHash}:  ${commitSha} - ${file}`);
+  const repoPath = repos.get(repoHash);
+  console.log(`path: ${repoPath}`);
 
-  repo.getCommit(commitSha)
-    .then(commit => {
-      console.log("Got commit");
+  let entry;
+  Git.Repository.open(repoPath)
+    .then(function(repo) {
+      return repo.getCommit(commitSha);
+    })
+    .then(function(commit) {
       return commit.getEntry(file);
-    }).then(entry => {
-      console.log("Got entry");
-      return entry.getBlob().then(function(blob) {
-        blob.entry = entry;
-        return blob;
-      });
-  }).then(blob => {
-    const cyclomatic = getCyclomaticComplexity(String(blob));
-  }).catch(error => {
-    console.error(error);
-  })
+    })
+    .then(function(entryResult) {
+      entry = entryResult;
+      return entry.getBlob();
+    })
+    .done(async function(blob) {
+      // Print first 10 lines
+      // console.log(blob.toString().split("\n").slice(0, 10).join("\n"));
+
+      const cyclomatic = getCyclomaticComplexity(String(blob));
+      const body = { repoHash, commitSha, file, cyclomatic };
+      const { ok, status, response } = await makeRequest(`${MASTER}/cyclomatic`, "post", body);
+      console.log(`Processed: ${file}`);
+      return process();
+    });
 }
 
 // Note must be <= es6
@@ -95,11 +116,9 @@ async function makeRequest(endpoint, method, body) {
 
   const { ok, status } = response;
 
-  console.log(`Got ${status}`);
 
   const contentType = response.headers.get("content-type");
   if(contentType && contentType.indexOf("application/json") !== -1) {
-    console.log("jsoning");
     response = await response.json();
   }
 
