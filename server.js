@@ -37,5 +37,5 @@ app.post('/job', WorkerController.createJob);
 
 // Initialize the Server
 app.listen(5001, () => {
-  console.log('Cyclomatic Complexity Worker on port 5000');
+  console.log('Cyclomatic Complexity Worker on port 5001');
 });

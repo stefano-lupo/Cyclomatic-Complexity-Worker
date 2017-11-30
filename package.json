@@ -5,7 +5,6 @@
   "main": "server.js",
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
-    "start": "nodemon server.js --exec babel-node --presets es2015",
     "babel": "babel-node server.js --presets es2015"
   },
   "repository": {

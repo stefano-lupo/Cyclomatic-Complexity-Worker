@@ -2,9 +2,27 @@ import Git from 'nodegit';
 import escomplex from 'escomplex';
 import fs from 'fs';
 import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const GITHUB_BASE_URL = "https://github.com";
 const MASTER = "http://localhost:5000/api";
+
+
+
+const token = process.env.GITHUB_KEY;
+const cloneURL = `https://${token}:x-oauth-basic@github.com`;
+const cloneOptions = {
+  fetchOpts: {
+    callbacks: {
+      certificateCheck: () => { return 1; },
+      credentials: () => {
+        return NodeGit.Cred.userpassPlaintextNew(token, 'x-oauth-basic');
+      }
+    }
+  }
+};
+
 
 /**
  * POST /job
@@ -13,13 +31,14 @@ const MASTER = "http://localhost:5000/api";
  */
 export const createJob = async (req, res) => {
   const { repoUrl, repoName, repoOwner } = req.body;
-  console.log(`Cloning ${repoUrl}...`);
-  Git.Clone(repoUrl, `downloads/${repoName}-${new Date().getTime()/1000}`)
+  const url = `${cloneURL}/${repoOwner}/${repoName}`;
+  console.log(`Cloning ${url}...`);
+  Git.Clone(url, `downloads/${repoName}-${new Date().getTime()/1000}`, cloneOptions)
     .then((repository) => {
       // Work with the repository object here.
-      console.log("Foudn repo");
       res.send({message: `Successfully cloned repo`});
-      processRepo(repository, repoUrl);
+      // return;
+      // processRepo(repository, repoUrl);
     })
     .catch(err => {
       console.error(err);
@@ -50,7 +69,6 @@ async function processRepo(repo, repoUrl) {
         blob.entry = entry;
         return blob;
       });
-
   }).then(blob => {
     const cyclomatic = getCyclomaticComplexity(String(blob));
   }).catch(error => {
