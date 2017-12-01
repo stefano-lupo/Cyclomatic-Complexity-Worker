@@ -2,7 +2,6 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import morgan from 'morgan';
-import moment from 'moment';
 
 // Import Controllers
 import * as WorkerController from './controllers/WorkerController';
@@ -12,8 +11,6 @@ const app = express();
 app.use(bodyParser.urlencoded({extended: true}));   // Parses application/x-www-form-urlencoded for req.body
 app.use(bodyParser.json());                         // Parses application/json for req.body
 app.use(morgan('dev'));
-
-app.set('view engine', 'ejs');
 
 
 // Initialize the DB
@@ -26,13 +23,8 @@ app.set('view engine', 'ejs');
 // });
 
 
-const router = express.Router();
-
-
 // API endpoints
 app.post('/job', WorkerController.createJob);
-
-
 
 
 // Initialize the Server

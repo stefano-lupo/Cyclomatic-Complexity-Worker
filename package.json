@@ -18,13 +18,10 @@
   },
   "homepage": "https://github.com/stefano-lupo/Cyclomatic-Complexity-Worker#readme",
   "dependencies": {
-    "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.17.2",
     "dotenv": "^4.0.0",
     "esprima": "^4.0.0",
     "express": "^4.15.3",
-    "express-jwt": "^5.3.0",
-    "jsonwebtoken": "^7.4.1",
     "moment": "^2.18.1",
     "mongodb": "^2.2.30",
     "mongoose": "^4.11.3",

@@ -1,14 +1,15 @@
 import Git from 'nodegit';
 import escomplex from 'escomplex';
-import fs from 'fs';
+
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
+dotenv.config();
 
-dotenv.config({path: `../${__dirname}/.env`});
 console.log(process.env);
 
 const GITHUB_BASE_URL = "https://github.com";
 const MASTER = "http://localhost:5000/api";
+const repos = new Map();
 
 
 /**
@@ -28,8 +29,6 @@ const cloneOptions = {
 };
 
 
-const repos = new Map();
-
 
 /**
  * POST /job
@@ -37,20 +36,27 @@ const repos = new Map();
  * Gets the worker to clone the given repo
  */
 export const createJob = async (req, res) => {
+
+  // Extract repository information
   const { repoHash, repoName, repoOwner } = req.body;
   const url = `${cloneURL}/${repoOwner}/${repoName}`;
+
+  // Clone repository
   console.log(`Cloning ${url}...`);
-  const repoPath = `downloads/${repoName}-${new Date().getTime()/1000}`;
+  const repoPath = `downloads/${repoOwner}_${repoName}`;
   Git.Clone(url, repoPath, cloneOptions)
     .then((repository) => {
       // Repository object here is a disaster.. so dont save it, but it is cloned..
+      // Just save path it was cloned to and we can open it with that later
       repos.set(repoHash, { repoPath, numProcessed: 0, numFailed: 0 });
       res.send({message: `Successfully cloned repo`});
+
+      // Wait 2 seconds before requesting work
+      //TODO: Replace this with a callback or something not stupid
       console.log(`Waiting 2s to request work`);
       setTimeout(() => {
         process();
       }, 2000);
-      // process();
     })
     .catch(err => {
       console.error(err);
@@ -60,13 +66,19 @@ export const createJob = async (req, res) => {
 };
 
 
+/**
+ * Checks with master to see if any work is available and performs that work if there is
+ */
+//TODO: Implement nicer way of sleeping worker etc
 async function process() {
-  const { ok, status, response } = await makeRequest(`${MASTER}/work`, "get");
 
+  // Check if there is any work there
+  const { ok, status, response } = await makeRequest(`${MASTER}/work`, "get");
   const { finished, repoHash, commitSha, file, } = response;
 
 
-
+  // If master responded with finished: recursive calls for this processing thread are finished
+  // Should probably delete repo here
   if(finished) {
     const repoEntry = repos.values().next().value;
     console.log(`Total Processed = ${repoEntry.numProcessed}, Total Failed = ${repoEntry.numFailed}`);
@@ -77,7 +89,7 @@ async function process() {
   const repoEntry = repos.get(repoHash);
 
 
-
+  // Open the repository
   let entry;
   Git.Repository.open(repoEntry.repoPath)
     .then(function(repo) {
@@ -94,30 +106,48 @@ async function process() {
       // Print first 10 lines
       // console.log(blob.toString().split("\n").slice(0, 10).join("\n"));
 
+      // Compute the cyclomatic complexity
       let cyclomatic;
       try {
         cyclomatic = getCyclomaticComplexity(String(blob));
       } catch (err) {
+        // Library sometimes stuggles with files with weird js mixins that it doesnt recognise
+        // Returning -1 here means these files will be skipped
         console.error(err);
         repoEntry.numFailed ++;
         cyclomatic = -1;
       }
+
+      // Send results back to master
       const body = { repoHash, commitSha, file, cyclomatic };
       const { ok, status, response } = await makeRequest(`${MASTER}/cyclomatic`, "post", body);
       repoEntry.numProcessed++;
       console.log(`\n`);
+
+      // Go back and process some more.
       return process();
     });
 }
 
-// Note must be <= es6
+/**
+ * Computes cyclomatic complexity of the passed in string
+ * Ideally this would be a file that it reads using a stream but time = nowhere to be found
+ * @param fileStr string representation of the file
+ * @returns {*}
+ */
 function getCyclomaticComplexity(fileStr) {
-  // const fileStr = fs.readFileSync(file, 'utf-8');
   const result = escomplex.analyse(fileStr, {}).aggregate.cyclomatic;
   console.log(`Cyclomatic complexity of file: ${result}`);
   return result
 }
 
+
+/**
+ * Makes a request to the given endpoint
+ * @param endpoint url of endpoint
+ * @param method get/post etc
+ * @param body if using post
+ */
 async function makeRequest(endpoint, method, body) {
   const headers =  {'Content-Type': 'application/json'};
   let response;
@@ -136,5 +166,4 @@ async function makeRequest(endpoint, method, body) {
   }
 
   return {ok, status, response}
-
 }
