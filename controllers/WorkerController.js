@@ -1,6 +1,7 @@
 import Git from 'nodegit';
 import escomplex from 'escomplex';
-
+import fs from 'fs';
+import rimraf from 'rimraf';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -44,6 +45,10 @@ export const createJob = async (req, res) => {
   // Clone repository
   console.log(`Cloning ${url}...`);
   const repoPath = `downloads/${repoOwner}_${repoName}`;
+  if(fs.existsSync(repoPath)) {
+    console.log(`Deleting old copy of ${repoOwner}_${repoName}`);
+    rimraf.sync(repoPath);
+  }
   Git.Clone(url, repoPath, cloneOptions)
     .then((repository) => {
       // Repository object here is a disaster.. so dont save it, but it is cloned..
