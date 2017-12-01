@@ -14,7 +14,7 @@ const MASTER = "http://localhost:5000/api";
 /**
  * Parameters for accessing Github API with my api key
  */
-const token = "githubtoken";
+const token = "";
 const cloneURL = `https://${token}:x-oauth-basic@github.com`;
 const cloneOptions = {
   fetchOpts: {
@@ -40,11 +40,11 @@ export const createJob = async (req, res) => {
   const { repoHash, repoName, repoOwner } = req.body;
   const url = `${cloneURL}/${repoOwner}/${repoName}`;
   console.log(`Cloning ${url}...`);
-  const repoLocation = `downloads/${repoName}-${new Date().getTime()/1000}`;
-  Git.Clone(url, repoLocation, cloneOptions)
+  const repoPath = `downloads/${repoName}-${new Date().getTime()/1000}`;
+  Git.Clone(url, repoPath, cloneOptions)
     .then((repository) => {
       // Repository object here is a disaster.. so dont save it, but it is cloned..
-      repos.set(repoHash, repoLocation);
+      repos.set(repoHash, { repoPath, numProcessed: 0, numFailed: 0 });
       res.send({message: `Successfully cloned repo`});
       console.log(`Waiting 2s to request work`);
       setTimeout(() => {
@@ -59,22 +59,27 @@ export const createJob = async (req, res) => {
   ;
 };
 
+
 async function process() {
   const { ok, status, response } = await makeRequest(`${MASTER}/work`, "get");
 
   const { finished, repoHash, commitSha, file, } = response;
 
+
+
   if(finished) {
-    console.log(`Finished!`);
+    const repoEntry = repos.values().next().value;
+    console.log(`Total Processed = ${repoEntry.numProcessed}, Total Failed = ${repoEntry.numFailed}`);
     return;
   }
 
   console.log(`Looking for ${repoHash}:  ${commitSha} - ${file}`);
-  const repoPath = repos.get(repoHash);
-  console.log(`path: ${repoPath}`);
+  const repoEntry = repos.get(repoHash);
+
+
 
   let entry;
-  Git.Repository.open(repoPath)
+  Git.Repository.open(repoEntry.repoPath)
     .then(function(repo) {
       return repo.getCommit(commitSha);
     })
@@ -89,10 +94,18 @@ async function process() {
       // Print first 10 lines
       // console.log(blob.toString().split("\n").slice(0, 10).join("\n"));
 
-      const cyclomatic = getCyclomaticComplexity(String(blob));
+      let cyclomatic;
+      try {
+        cyclomatic = getCyclomaticComplexity(String(blob));
+      } catch (err) {
+        console.error(err);
+        repoEntry.numFailed ++;
+        cyclomatic = -1;
+      }
       const body = { repoHash, commitSha, file, cyclomatic };
       const { ok, status, response } = await makeRequest(`${MASTER}/cyclomatic`, "post", body);
-      console.log(`Processed: ${file}`);
+      repoEntry.numProcessed++;
+      console.log(`\n`);
       return process();
     });
 }
