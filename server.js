@@ -2,6 +2,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import morgan from 'morgan';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Import Controllers
 import * as WorkerController from './controllers/WorkerController';
@@ -11,6 +13,7 @@ const app = express();
 app.use(bodyParser.urlencoded({extended: true}));   // Parses application/x-www-form-urlencoded for req.body
 app.use(bodyParser.json());                         // Parses application/json for req.body
 app.use(morgan('dev'));
+
 
 
 // Initialize the DB
@@ -28,6 +31,7 @@ app.post('/job', WorkerController.createJob);
 
 
 // Initialize the Server
-app.listen(5001, () => {
-  console.log('Cyclomatic Complexity Worker on port 5001');
+const port = process.argv[4] || process.env.DEFAULT_PORT;
+app.listen(port, () => {
+  console.log(`Cyclomatic Complexity Worker on port ${port}`);
 });

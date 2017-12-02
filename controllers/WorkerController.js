@@ -6,17 +6,15 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log(process.env);
-
 const GITHUB_BASE_URL = "https://github.com";
-const MASTER = "http://localhost:5000/api";
+const { MASTER } = process.env;
 const repos = new Map();
 
 
 /**
  * Parameters for accessing Github API with my api key
  */
-const token = "";
+const token = process.env.GITHUB_KEY;
 const cloneURL = `https://${token}:x-oauth-basic@github.com`;
 const cloneOptions = {
   fetchOpts: {
@@ -56,12 +54,7 @@ export const createJob = async (req, res) => {
       repos.set(repoHash, { repoPath, numProcessed: 0, numFailed: 0 });
       res.send({message: `Successfully cloned repo`});
 
-      // Wait 2 seconds before requesting work
-      //TODO: Replace this with a callback or something not stupid
-      console.log(`Waiting 2s to request work`);
-      setTimeout(() => {
-        process();
-      }, 2000);
+      getWork();
     })
     .catch(err => {
       console.error(err);
@@ -75,7 +68,7 @@ export const createJob = async (req, res) => {
  * Checks with master to see if any work is available and performs that work if there is
  */
 //TODO: Implement nicer way of sleeping worker etc
-async function process() {
+async function getWork() {
 
   // Check if there is any work there
   const { ok, status, response } = await makeRequest(`${MASTER}/work`, "get");
@@ -108,9 +101,6 @@ async function process() {
       return entry.getBlob();
     })
     .done(async function(blob) {
-      // Print first 10 lines
-      // console.log(blob.toString().split("\n").slice(0, 10).join("\n"));
-
       // Compute the cyclomatic complexity
       let cyclomatic;
       try {
@@ -130,7 +120,7 @@ async function process() {
       console.log(`\n`);
 
       // Go back and process some more.
-      return process();
+      return getWork();
     });
 }
 

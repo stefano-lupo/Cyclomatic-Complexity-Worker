@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "hhttps://github.com/stefano-lupo/Cyclomatic-Complexity-Worker/issues"
+    "url": "https://github.com/stefano-lupo/Cyclomatic-Complexity-Worker/issues"
   },
   "homepage": "https://github.com/stefano-lupo/Cyclomatic-Complexity-Worker#readme",
   "dependencies": {
@@ -28,7 +28,22 @@
     "morgan": "^1.9.0",
     "node-fetch": "^1.7.1",
     "nodegit": "^0.20.3",
-    "rimraf": "^2.6.1"
+    "rimraf": "^2.6.1",
+
+    "espree": "^3.4.3",
+    "lodash": "^4.17.4",
+    "lodash.isnil": "^4.0.0",
+    "lodash.isobject": "^3.0.2",
+    "lodash.negate": "^3.0.2",
+    "debug": "^2.6.2",
+    "lodash.assign": "^4.2.0",
+    "lodash.isfunction": "^3.0.8",
+    "lodash.isnumber": "^3.0.3",
+    "lodash.isstring": "^4.0.1",
+    "lodash.merge": "^4.6.0",
+    "minimatch": "^3.0.2"
+
+
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
