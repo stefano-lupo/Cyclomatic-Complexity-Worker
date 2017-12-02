@@ -32,7 +32,7 @@ app.get('/ping', (req, res) => { res.send({message: `Online`})});
 
 
 // Initialize the Server
-const port = process.argv[4] || process.env.DEFAULT_PORT;
+const port = process.argv[2] || process.env.DEFAULT_PORT;
 app.set('downloadsDir', `downloads/${port}`);
 app.listen(port, () => {
   console.log(`Cyclomatic Complexity Worker on port ${port}`);
