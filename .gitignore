@@ -4,3 +4,4 @@ downloads
 node_modules/*
 !node_modules/escomplex
 npm-debug.log
+dist
