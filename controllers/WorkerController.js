@@ -78,8 +78,15 @@ async function getWork() {
   // If master responded with finished: recursive calls for this processing thread are finished
   // Should probably delete repo here
   if(finished) {
-    const repoEntry = repos.values().next().value;
-    console.log(`Total Processed = ${repoEntry.numProcessed}, Total Failed = ${repoEntry.numFailed}`);
+
+    const { repoPath, numProcessed, numFailed } = repos.get(repoHash);
+    console.log(repoPath, numProcessed, numFailed);
+
+    if(fs.existsSync(repoPath)) {
+      console.log(`Deleting old copy of ${repoPath}`);
+      rimraf.sync(repoPath);
+    }
+    console.log(`Total Processed = ${numProcessed}, Total Failed = ${numFailed}`);
     return;
   }
 
