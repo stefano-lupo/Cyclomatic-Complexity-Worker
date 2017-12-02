@@ -42,7 +42,8 @@ export const createJob = async (req, res) => {
 
   // Clone repository
   console.log(`Cloning ${url}...`);
-  const repoPath = `downloads/${repoOwner}_${repoName}`;
+  const downloadsDir = req.app.get('downloadsDir');
+  const repoPath = `${downloadsDir}/${repoOwner}_${repoName}`;
   if(fs.existsSync(repoPath)) {
     console.log(`Deleting old copy of ${repoOwner}_${repoName}`);
     rimraf.sync(repoPath);

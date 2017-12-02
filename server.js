@@ -32,6 +32,7 @@ app.post('/job', WorkerController.createJob);
 
 // Initialize the Server
 const port = process.argv[4] || process.env.DEFAULT_PORT;
+app.set('downloadsDir', `downloads/${port}`);
 app.listen(port, () => {
   console.log(`Cyclomatic Complexity Worker on port ${port}`);
 });
