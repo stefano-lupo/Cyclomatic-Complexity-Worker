@@ -28,6 +28,7 @@ app.use(morgan('dev'));
 
 // API endpoints
 app.post('/job', WorkerController.createJob);
+app.get('/ping', (req, res) => { res.send({message: `Online`})});
 
 
 // Initialize the Server
